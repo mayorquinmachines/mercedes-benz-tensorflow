@@ -77,9 +77,6 @@ cost = tf.reduce_mean(tf.pow(pred-y, 2))/(2*train_prepared.shape[0])
 optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
 init = tf.global_variables_initializer()
 
-#Initializing generators
-train_gen = group_list(train_prepared)
-y_train_gen = group_list(y_train)
 
 #Training 
 with tf.Session() as sess:
@@ -89,13 +86,15 @@ with tf.Session() as sess:
     for epoch in range(training_epochs):
         avg_cost = 0.
         total_batch = int(train_prepared.shape[0]/batch_size)
+        #Initializing generators
+        train_gen = group_list(train_prepared)
+        y_train_gen = group_list(y_train)
         # Loop over all batches
         try:
             for i in range(total_batch):
                 batch_x, batch_y = next(train_gen), next(y_train_gen).reshape(-1,1)
                 # Run optimization op (backprop) and cost op (to get loss value)
-                _, c = sess.run([optimizer, cost], feed_dict={x: batch_x,
-                                                    batch_y})
+                _, c = sess.run([optimizer, cost], feed_dict={x: batch_x, y:batch_y})
                 # Compute average loss
                 avg_cost += c / total_batch
         except StopIteration:
