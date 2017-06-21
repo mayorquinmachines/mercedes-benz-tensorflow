@@ -1,6 +1,9 @@
 """ Classes to preprocess data for mercedes kaggle contest """
 #!/usr/bin/env
 import pandas as pd
+import tensorflow as tf
+import numpy as np
+
 
 def load_data(path, drop_cols=None):
     """ Helper function to load in data from csv"""
@@ -20,3 +23,8 @@ def group_list(l, group_size=batch_size):
     """ Generator to chunk data into batches """
     for i in range(0, len(l), group_size):
         yield l[i:i+group_size]
+
+def reset_graph(seed=42):
+    tf.reset_default_graph()
+    tf.set_random_seed(seed)
+    np.random.seed(seed)

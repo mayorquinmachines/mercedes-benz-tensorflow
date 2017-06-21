@@ -1,38 +1,8 @@
 import tensorflow as tf
-import pandas as pd
 import numpy as np
-import helper_funcs as helpers
-from mercedes_classes import DataFrameSelector, Dummifier
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import Pipeline
 from sklearn.metrics import r2_score 
-
-#Opening data
-train_path = 'train.csv'
-
-train = helpers.load_data(train_path, drop_cols=['ID'])
-y_target = train["y"].values
-train = train.drop(["y"], axis=1)
-
-#Splitting the data into train and test sets
-X_train, X_test, y_train, y_test = train_test_split(train, y_target, test_size=0.2, random_state=42)
-
-#getting columns found in both data sets:
-train_cols = helpers.get_cols(X_train)
-test_cols = helpers.get_cols(X_test)
-columns = [x for x in train_cols if x in test_cols]
-
-
-#### Pipeline for processing data #######
-pipeline = Pipeline([
-        ('dummies', Dummifier()),
-        ('selector', DataFrameSelector(columns)),
-        ('std_scaler', StandardScaler()),
-    ])
-
-train_prepared = pipeline.fit_transform(X_train)
-test_prepared = pipeline.transform(X_test)
+from helper_funcs import group_list
+from data_prep import X_train, y_train, X_test, y_test
 
 # Parameters
 learning_rate = 0.1
@@ -73,7 +43,7 @@ biases = {
 }
 pred = multilayer_perceptron(x, weights, biases)
 
-cost = tf.reduce_mean(tf.pow(pred-y, 2))/(2*train_prepared.shape[0])
+cost = tf.reduce_mean(tf.pow(pred-y, 2))/(2*X_train.shape[0])
 optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
 init = tf.global_variables_initializer()
 
@@ -85,10 +55,10 @@ with tf.Session() as sess:
     # Training cycle
     for epoch in range(training_epochs):
         avg_cost = 0.
-        total_batch = int(train_prepared.shape[0]/batch_size)
+        total_batch = int(X_train.shape[0]/batch_size)
         #Initializing generators
-        train_gen = group_list(train_prepared)
-        y_train_gen = group_list(y_train)
+        train_gen = group_list(X_train, batch_size)
+        y_train_gen = group_list(y_train, batch_size)
         # Loop over all batches
         try:
             for i in range(total_batch):
@@ -107,10 +77,10 @@ with tf.Session() as sess:
 
     # Test model
     correct_prediction = tf.equal(tf.argmax(pred, 1), tf.argmax(y, 1))
-    print(r2_score(y.eval(feed_dict={y: y_test.reshape(-1,1)}, session=sess), pred.eval(feed_dict={x: test_prepared}, session=sess)))
+    print(r2_score(y.eval(feed_dict={y: y_test.reshape(-1,1)}, session=sess), pred.eval(feed_dict={x: X_test}, session=sess)))
  
     # Calculate accuracy
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
-    print("Accuracy:", accuracy.eval({x: test_prepared, y: y_test.reshape(-1,1)}))
+    print("Accuracy:", accuracy.eval({x: X_test, y: y_test.reshape(-1,1)}))
 
 
