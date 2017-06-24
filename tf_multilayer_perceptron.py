@@ -6,7 +6,7 @@ from data_prep import DataPrep
 
 #Loading and Transforming data
 prep = DataPrep(dummy_pipe=True)
-X_train, y_train, X_val, y_val, test, test_id = prep.load_data('train.csv', 'test.csv')
+X_train, y_train, X_val, y_val, test, test_id = prep.load_data('data/train.csv', 'data/test.csv')
 X_train, X_val, _ = prep.transform(X_train, X_val, test)
 #Don't need these for this example
 del test
