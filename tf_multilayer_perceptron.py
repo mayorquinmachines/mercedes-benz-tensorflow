@@ -2,7 +2,16 @@ import tensorflow as tf
 import numpy as np
 from sklearn.metrics import r2_score 
 from helper_funcs import group_list
-from data_prep import X_train, y_train, X_test, y_test
+from data_prep import DataPrep
+
+#Loading and Transforming data
+prep = DataPrep(dummy_pipe=True)
+X_train, y_train, X_val, y_val, test, test_id = prep.load_data('train.csv', 'test.csv')
+X_train, X_val, _ = prep.transform(X_train, X_val, test)
+#Don't need these for this example
+del test
+del test_id
+
 
 # Parameters
 learning_rate = 0.1
@@ -13,7 +22,7 @@ display_step = 1
 # Network Parameters
 n_hidden_1 = 8 # 1st layer number of features
 n_hidden_2 = 8 # 2nd layer number of features
-n_input = 538 # MNIST data input (img shape: 28*28)
+n_input = X_train.shape[1] # MNIST data input (img shape: 28*28)
 n_classes = 1 # MNIST total classes (0-9 digits)
 
 # tf Graph input
@@ -77,10 +86,10 @@ with tf.Session() as sess:
 
     # Test model
     correct_prediction = tf.equal(tf.argmax(pred, 1), tf.argmax(y, 1))
-    print(r2_score(y.eval(feed_dict={y: y_test.reshape(-1,1)}, session=sess), pred.eval(feed_dict={x: X_test}, session=sess)))
+    print(r2_score(y.eval(feed_dict={y: y_val.reshape(-1,1)}, session=sess), pred.eval(feed_dict={x: X_val}, session=sess)))
  
     # Calculate accuracy
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
-    print("Accuracy:", accuracy.eval({x: X_test, y: y_test.reshape(-1,1)}))
+    print("Accuracy:", accuracy.eval({x: X_val, y: y_val.reshape(-1,1)}))
 
 
